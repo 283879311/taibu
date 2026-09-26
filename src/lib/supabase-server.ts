@@ -6,7 +6,7 @@
  */
 
 import { createClient, type Session, type SupabaseClient } from '@supabase/supabase-js';
-import { getSupabaseAnonKey, getSupabaseAuthAdminKey, getSupabaseUrl } from '@/lib/supabase-env';
+import { getSupabasePublishableKey, getSupabaseAuthAdminKey, getSupabaseUrl } from '@/lib/supabase-env';
 
 let serviceClient: SupabaseClient | null = null;
 let authClient: SupabaseClient | null = null;
@@ -23,7 +23,7 @@ const MISSING_SYSTEM_ADMIN_CREDENTIALS_ERROR = 'Missing SUPABASE_SYSTEM_ADMIN_EM
 function getSystemAuthClient(): SupabaseClient {
     if (authClient) return authClient;
 
-    authClient = createClient(getSupabaseUrl(), getSupabaseAnonKey(), {
+    authClient = createClient(getSupabaseUrl(), getSupabasePublishableKey(), {
         auth: { persistSession: false, autoRefreshToken: false },
     });
     return authClient;
@@ -86,9 +86,9 @@ export function getSystemAdminClient(): SupabaseClient {
     if (serviceClient) return serviceClient;
 
     const url = getSupabaseUrl();
-    const anonKey = getSupabaseAnonKey();
+    const publishableKey = getSupabasePublishableKey();
 
-    serviceClient = createClient(url, anonKey, {
+    serviceClient = createClient(url, publishableKey, {
         auth: { persistSession: false, autoRefreshToken: false },
         accessToken: async () => {
             const token = await getSystemAccessToken();
