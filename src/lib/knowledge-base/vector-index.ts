@@ -1,6 +1,7 @@
 import 'server-only';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { getSupabasePublishableKey, getSupabaseUrl } from '@/lib/supabase-env';
 
 async function getFeatureFlag(key: string): Promise<boolean> {
     const val = process.env[key];
@@ -28,19 +29,19 @@ export async function createVectorIndexIfNeeded(
 }
 
 async function triggerVectorIndexJob(): Promise<void> {
-    const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const anonKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const supabaseUrl = getSupabaseUrl();
+    const publishableKey = getSupabasePublishableKey();
     const internalSecret = process.env.INTERNAL_API_SECRET;
 
-    if (!supabaseUrl || !anonKey || !internalSecret) {
-        throw new Error('Missing Supabase configuration (SUPABASE_URL, SUPABASE_ANON_KEY and INTERNAL_API_SECRET required)');
+    if (!internalSecret) {
+        throw new Error('Missing Supabase configuration (SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY and INTERNAL_API_SECRET required)');
     }
 
     const response = await fetch(`${supabaseUrl}/functions/v1/create-vector-index`, {
         method: 'POST',
         headers: {
-            Authorization: `Bearer ${anonKey}`,
-            apikey: anonKey,
+            Authorization: `Bearer ${publishableKey}`,
+            apikey: publishableKey,
             'x-internal-api-secret': internalSecret,
             'Content-Type': 'application/json'
         }
@@ -56,19 +57,19 @@ export async function triggerVectorIndexCreation(dimension?: number): Promise<{
     results?: Array<{ dimension: number; status: string }>;
     error?: string;
 }> {
-    const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const anonKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const supabaseUrl = getSupabaseUrl();
+    const publishableKey = getSupabasePublishableKey();
     const internalSecret = process.env.INTERNAL_API_SECRET;
 
-    if (!supabaseUrl || !anonKey || !internalSecret) {
-        throw new Error('Missing Supabase configuration (SUPABASE_URL, SUPABASE_ANON_KEY and INTERNAL_API_SECRET required)');
+    if (!internalSecret) {
+        throw new Error('Missing Supabase configuration (SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY and INTERNAL_API_SECRET required)');
     }
 
     const response = await fetch(`${supabaseUrl}/functions/v1/create-vector-index`, {
         method: 'POST',
         headers: {
-            Authorization: `Bearer ${anonKey}`,
-            apikey: anonKey,
+            Authorization: `Bearer ${publishableKey}`,
+            apikey: publishableKey,
             'x-internal-api-secret': internalSecret,
             'Content-Type': 'application/json'
         },

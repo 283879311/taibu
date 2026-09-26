@@ -232,32 +232,32 @@ test('browser auth client should not expose table query or rpc helpers', async (
   assert.equal('rpc' in (supabase as Record<string, unknown>), false);
 });
 
-test('supabase env helpers should fall back to NEXT_PUBLIC values when server env is absent', async () => {
-  const { getSupabaseAnonKey, getSupabaseUrl } = await import('../lib/supabase-env');
-  const previousUrl = process.env.SUPABASE_URL;
-  const previousAnonKey = process.env.SUPABASE_ANON_KEY;
-  const previousPublicUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const previousPublicAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  delete process.env.SUPABASE_URL;
-  delete process.env.SUPABASE_ANON_KEY;
-  process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://example.supabase.co';
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'public-anon-key';
+test('supabase env helpers prefer current API keys and retain legacy-key fallbacks', async () => {
+  const { getSupabasePublishableKey, getSupabaseUrl } = await import('../lib/supabase-env');
+  const names = [
+    'SUPABASE_URL',
+    'NEXT_PUBLIC_SUPABASE_URL',
+    'SUPABASE_PUBLISHABLE_KEY',
+    'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY',
+    'SUPABASE_ANON_KEY',
+    'NEXT_PUBLIC_SUPABASE_ANON_KEY',
+  ] as const;
+  const previous = new Map(names.map((name) => [name, process.env[name]]));
 
   try {
+    for (const name of names) delete process.env[name];
+    process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://example.supabase.co';
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'legacy-anon-key';
     assert.equal(getSupabaseUrl(), 'https://example.supabase.co');
-    assert.equal(getSupabaseAnonKey(), 'public-anon-key');
+    assert.equal(getSupabasePublishableKey(), 'legacy-anon-key');
+
+    process.env.SUPABASE_PUBLISHABLE_KEY = 'current-publishable-key';
+    assert.equal(getSupabasePublishableKey(), 'current-publishable-key');
   } finally {
-    if (previousUrl === undefined) delete process.env.SUPABASE_URL;
-    else process.env.SUPABASE_URL = previousUrl;
-
-    if (previousAnonKey === undefined) delete process.env.SUPABASE_ANON_KEY;
-    else process.env.SUPABASE_ANON_KEY = previousAnonKey;
-
-    if (previousPublicUrl === undefined) delete process.env.NEXT_PUBLIC_SUPABASE_URL;
-    else process.env.NEXT_PUBLIC_SUPABASE_URL = previousPublicUrl;
-
-    if (previousPublicAnonKey === undefined) delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    else process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = previousPublicAnonKey;
+    for (const name of names) {
+      const value = previous.get(name);
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
   }
 });

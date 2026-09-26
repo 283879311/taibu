@@ -144,7 +144,7 @@ pnpm install
 
 # 配置环境变量
 cp .env.example .env
-# 编辑 .env 填入必要的 API Keys
+# 编辑 .env：在 Supabase Dashboard 的 API Keys 页面填入 `SUPABASE_URL`、`SUPABASE_PUBLISHABLE_KEY`，以及仅服务端使用的 `SUPABASE_SECRET_KEY`（如需 Auth 管理功能）
 
 # 启动开发服务器
 pnpm dev
